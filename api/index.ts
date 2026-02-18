@@ -5,10 +5,10 @@ import cors from 'cors';
 import { fileURLToPath } from 'url';
 import path from 'path';
 import 'dotenv/config';
-import db from './server/db';
+import db from '../server/db';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { authenticateToken, AuthRequest } from './server/middleware';
+import { authenticateToken, AuthRequest } from '../server/middleware';
 import { z, ZodError } from 'zod';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -281,9 +281,6 @@ async function startServer() {
 
   process.on('SIGTERM', shutdown);
   process.on('SIGINT', shutdown);
-}
-
-  // No need to call startServer() at the end, as we'll export the app
 }
 
 // Export the app for Vercel
