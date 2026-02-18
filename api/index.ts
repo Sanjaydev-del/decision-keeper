@@ -5,7 +5,7 @@ import cors from 'cors';
 import { fileURLToPath } from 'url';
 import path from 'path';
 import 'dotenv/config';
-import db from '../server/db';
+import db, { dbError } from '../server/db';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { authenticateToken, AuthRequest } from '../server/middleware';
@@ -37,7 +37,13 @@ app.use((req, res, next) => {
 // Health Check
 app.get('/api/health', (req, res) => {
   res.json({
-    status: 'ok',
+    status: db ? 'ok' : 'error',
+    dbConnected: !!db,
+    dbError: dbError ? {
+      message: dbError.message,
+      stack: dbError.stack,
+      code: dbError.code
+    } : null,
     environment: process.env.VERCEL ? 'vercel' : 'local',
     timestamp: new Date().toISOString()
   });
