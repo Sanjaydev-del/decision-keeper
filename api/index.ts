@@ -4,7 +4,9 @@ import cors from 'cors';
 import { fileURLToPath } from 'url';
 import path from 'path';
 import 'dotenv/config';
-import { db, dbError } from '../server/db';
+// import { db, dbError } from '../server/db';
+const db: any = null;
+const dbError: any = null;
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { authenticateToken, AuthRequest } from '../server/middleware';
@@ -32,12 +34,14 @@ app.use((req, res, next) => {
 
 // Helper for DB check
 const checkDb = (req: Request, res: Response, next: NextFunction) => {
+  /*
   if (!db) {
     return res.status(503).json({
       message: 'Database not initialized',
       error: dbError?.message || 'Unknown DB error'
     });
   }
+  */
   next();
 };
 
