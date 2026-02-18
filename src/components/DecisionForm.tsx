@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { Plus } from 'lucide-react';
+import { Plus, Sparkles, X, ChevronRight } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface Props {
   onDecisionAdded: (decision: any) => void;
@@ -11,9 +12,11 @@ export default function DecisionForm({ onDecisionAdded }: Props) {
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('Personal');
   const [isExpanded, setIsExpanded] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     try {
       const response = await axios.post('/api/decisions', {
         title,
@@ -27,81 +30,106 @@ export default function DecisionForm({ onDecisionAdded }: Props) {
       setIsExpanded(false);
     } catch (error) {
       console.error('Failed to add decision', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (!isExpanded) {
-    return (
-      <button
-        onClick={() => setIsExpanded(true)}
-        className="w-full bg-white border-2 border-dashed border-slate-200 rounded-2xl p-6 text-slate-400 hover:border-indigo-300 hover:text-indigo-500 transition-all flex items-center justify-center gap-2 font-medium"
-      >
-        <Plus size={20} />
-        Log a new decision
-      </button>
-    );
-  }
-
   return (
-    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-8">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-semibold text-slate-800">New Decision</h3>
-        <button 
-          onClick={() => setIsExpanded(false)}
-          className="text-slate-400 hover:text-slate-600 text-sm"
-        >
-          Cancel
-        </button>
-      </div>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-slate-600 mb-1">Title</label>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-            placeholder="What did you decide?"
-            required
-          />
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1">Category</label>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white"
-            >
-              <option value="Career">Career</option>
-              <option value="Health">Health</option>
-              <option value="Finance">Finance</option>
-              <option value="Personal">Personal</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-slate-600 mb-1">Description (Optional)</label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all h-24 resize-none"
-            placeholder="Add context, reasoning, or expected outcomes..."
-          />
-        </div>
-
-        <div className="flex justify-end pt-2">
-          <button
-            type="submit"
-            className="bg-indigo-600 text-white px-6 py-2 rounded-xl font-medium hover:bg-indigo-700 transition-colors"
+    <div className="w-full">
+      <AnimatePresence mode="wait">
+        {!isExpanded ? (
+          <motion.button
+            key="collapsed"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            onClick={() => setIsExpanded(true)}
+            className="w-full h-16 sm:h-20 bg-white border-2 border-dashed border-slate-200 rounded-[2rem] text-slate-400 hover:border-indigo-400 hover:text-indigo-600 hover:bg-indigo-50/30 transition-all flex items-center justify-center gap-3 font-bold group"
           >
-            Save Decision
-          </button>
-        </div>
-      </form>
+            <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-indigo-100 transition-colors">
+              <Plus size={18} />
+            </div>
+            Log a new decision
+          </motion.button>
+        ) : (
+          <motion.div
+            key="expanded"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            className="glass p-6 sm:p-8 rounded-[2.5rem] shadow-2xl shadow-indigo-500/10 border-indigo-100"
+          >
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex items-center gap-2">
+                <Sparkles className="text-indigo-600 w-5 h-5" />
+                <h3 className="text-lg font-bold text-slate-800">New Entry</h3>
+              </div>
+              <button
+                onClick={() => setIsExpanded(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 transition-colors"
+                title="Cancel"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="space-y-1.5">
+                <label className="text-sm font-bold text-slate-600 ml-1">Decision Title</label>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="input-field"
+                  placeholder="What's the verdict?"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-sm font-bold text-slate-600 ml-1">Category</label>
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="input-field appearance-none cursor-pointer"
+                >
+                  <option value="Career">💼 Career</option>
+                  <option value="Health">💪 Health</option>
+                  <option value="Finance">💰 Finance</option>
+                  <option value="Personal">🏠 Personal</option>
+                  <option value="Other">🌀 Other</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-sm font-bold text-slate-600 ml-1">Notes & Context</label>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="input-field min-h-[120px] py-4 resize-none"
+                  placeholder="The reasoning behind the choice..."
+                />
+              </div>
+
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="btn-primary w-full flex items-center justify-center gap-2 group"
+                >
+                  {loading ? 'Saving Entry...' : (
+                    <>
+                      Save to Vault
+                      <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

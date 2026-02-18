@@ -210,17 +210,39 @@ async function startServer() {
     }
   });
 
-  // --- Vite Middleware ---
+  // --- Vite / Static Serving ---
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
     });
+    // Use vite's connect instance as a middleware
     app.use(vite.middlewares);
+
+    // SPA Fallback for dev mode
+    app.get('*', async (req, res, next) => {
+      if (req.originalUrl.startsWith('/api')) return next();
+      try {
+        const url = req.originalUrl;
+        const html = await vite.transformIndexHtml(url, `
+          <!DOCTYPE html>
+          <html>
+            <head><meta charset="UTF-8" /></head>
+            <body><div id="root"></div><script type="module" src="/src/main.tsx"></script></body>
+          </html>
+        `);
+        res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
+      } catch (e) {
+        vite.ssrFixStacktrace(e as Error);
+        next(e);
+      }
+    });
   } else {
-    app.use(express.static(path.join(__dirname, 'dist')));
+    const distPath = path.join(__dirname, 'dist');
+    app.use(express.static(distPath));
     app.get('*', (req, res) => {
-      res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+      if (req.originalUrl.startsWith('/api')) return res.status(404).json({ message: 'API route not found' });
+      res.sendFile(path.join(distPath, 'index.html'));
     });
   }
 

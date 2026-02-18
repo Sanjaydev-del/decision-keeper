@@ -3,7 +3,8 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import DecisionCard from '../components/DecisionCard';
 import DecisionForm from '../components/DecisionForm';
-import { LogOut, LayoutGrid } from 'lucide-react';
+import { LogOut, LayoutGrid, Plus, Search } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface Decision {
   id: number;
@@ -17,6 +18,7 @@ export default function Dashboard() {
   const { user, logout } = useAuth();
   const [decisions, setDecisions] = useState<Decision[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isFormOpen, setIsFormOpen] = useState(false);
 
   useEffect(() => {
     fetchDecisions();
@@ -35,6 +37,7 @@ export default function Dashboard() {
 
   const handleDecisionAdded = (newDecision: Decision) => {
     setDecisions([newDecision, ...decisions]);
+    if (window.innerWidth < 1024) setIsFormOpen(false);
   };
 
   const handleDelete = async (id: number) => {
@@ -48,56 +51,111 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 flex flex-col">
       {/* Header */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-indigo-600">
-            <LayoutGrid className="w-6 h-6" />
-            <h1 className="font-bold text-xl tracking-tight text-slate-900">Decision Keeper</h1>
+      <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-30">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-600/20">
+              <LayoutGrid className="text-white w-6 h-6" />
+            </div>
+            <h1 className="font-bold text-lg sm:text-xl tracking-tight text-slate-900 leading-none">
+              Decision Keeper
+            </h1>
           </div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-slate-500 hidden sm:block">{user?.email}</span>
+          <div className="flex items-center gap-2 sm:gap-4">
+            <div className="hidden sm:flex flex-col items-end">
+              <span className="text-sm font-semibold text-slate-900">{user?.email?.split('@')[0]}</span>
+              <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold text-right">Pro Member</span>
+            </div>
             <button
               onClick={logout}
-              className="text-slate-500 hover:text-slate-800 transition-colors p-2 rounded-lg hover:bg-slate-100"
+              className="text-slate-400 hover:text-red-500 transition-colors p-2.5 rounded-xl hover:bg-red-50"
               title="Log out"
             >
-              <LogOut size={20} />
+              <LogOut size={22} />
             </button>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-slate-800 mb-2">Your Decisions</h2>
-          <p className="text-slate-500">Track and reflect on your choices.</p>
-        </div>
+      <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-10">
+        <div className="lg:grid lg:grid-cols-12 lg:gap-10">
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column: Form */}
-          <div className="lg:col-span-1">
-            <DecisionForm onDecisionAdded={handleDecisionAdded} />
+          {/* Mobile Add Button */}
+          <div className="lg:hidden mb-6">
+            <button
+              onClick={() => setIsFormOpen(!isFormOpen)}
+              className="w-full btn-primary flex items-center justify-center gap-2"
+            >
+              <Plus size={20} />
+              {isFormOpen ? 'Cancel' : 'New Decision'}
+            </button>
           </div>
 
-          {/* Right Column: List */}
-          <div className="lg:col-span-2">
-            {loading ? (
-              <div className="text-center py-12 text-slate-400">Loading decisions...</div>
-            ) : decisions.length === 0 ? (
-              <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-slate-200">
-                <p className="text-slate-500 mb-2">No decisions recorded yet.</p>
-                <p className="text-sm text-slate-400">Add your first one to get started!</p>
+          {/* Form Column */}
+          <div className={`lg:col-span-4 mb-8 lg:mb-0 ${isFormOpen ? 'block' : 'hidden lg:block'}`}>
+            <div className="sticky top-28">
+              <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4 ml-1">Creation Hub</h2>
+              <DecisionForm onDecisionAdded={handleDecisionAdded} />
+            </div>
+          </div>
+
+          {/* List Column */}
+          <div className="lg:col-span-8">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+              <div>
+                <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Your Vault</h2>
+                <p className="text-slate-500 mt-1">Reflect, refine, and evolve.</p>
               </div>
-            ) : (
-              <div className="grid gap-4">
-                {decisions.map((decision) => (
-                  <DecisionCard key={decision.id} decision={decision} onDelete={handleDelete} />
-                ))}
+              <div className="relative group min-w-[200px]">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search decisions..."
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-white/50 focus:bg-white text-sm focus:outline-none focus:ring-4 focus:ring-indigo-500/5 transition-all"
+                />
               </div>
-            )}
+            </div>
+
+            <div className="space-y-4">
+              {loading ? (
+                <div className="grid gap-4">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="h-32 bg-slate-100 rounded-3xl animate-pulse" />
+                  ))}
+                </div>
+              ) : decisions.length === 0 ? (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-center py-20 bg-white rounded-[2.5rem] border border-dashed border-slate-200"
+                >
+                  <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <LayoutGrid className="text-slate-300 w-8 h-8" />
+                  </div>
+                  <p className="text-slate-600 font-semibold mb-1">Your vault is empty</p>
+                  <p className="text-sm text-slate-400">Time to log your first major choice.</p>
+                </motion.div>
+              ) : (
+                <div className="grid gap-5">
+                  <AnimatePresence mode="popLayout">
+                    {decisions.map((decision) => (
+                      <motion.div
+                        key={decision.id}
+                        layout
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                      >
+                        <DecisionCard decision={decision} onDelete={handleDelete} />
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </main>
