@@ -14,14 +14,15 @@ import { z, ZodError } from 'zod';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key-change-in-prod';
 
-async function startServer() {
-  const app = express();
-  const PORT = process.env.PORT || 3000;
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-  // --- Middleware ---
-  app.use(express.json());
-  app.use(cookieParser());
-  app.use(cors());
+// --- Middleware ---
+app.use(express.json());
+app.use(cookieParser());
+app.use(cors());
+
+async function startServer() {
 
   // Request Logging
   app.use((req, res, next) => {
@@ -282,4 +283,15 @@ async function startServer() {
   process.on('SIGINT', shutdown);
 }
 
-startServer();
+  // No need to call startServer() at the end, as we'll export the app
+}
+
+// Export the app for Vercel
+export default app;
+
+// Only listen if not in a Vercel environment
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  startServer().catch(err => {
+    console.error('Failed to start server:', err);
+  });
+}

@@ -2,13 +2,16 @@ import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
 
-// Ensure the data directory exists
-const dataDir = path.join(process.cwd(), 'data');
+// detect if running on Vercel
+const isVercel = process.env.VERCEL === '1';
+const dataDir = isVercel ? '/tmp' : path.join(process.cwd(), 'data');
+
 if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir);
+  fs.mkdirSync(dataDir, { recursive: true });
 }
 
-const db = new Database(path.join(dataDir, 'decision_keeper.db'));
+const dbPath = path.join(dataDir, 'decision_keeper.db');
+const db = new Database(dbPath);
 
 // Initialize tables
 db.exec(`
