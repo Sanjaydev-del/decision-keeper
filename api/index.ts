@@ -1,11 +1,10 @@
 import express, { Request, Response, NextFunction } from 'express';
-import { createServer as createViteServer } from 'vite';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import { fileURLToPath } from 'url';
 import path from 'path';
 import 'dotenv/config';
-import db, { dbError } from '../server/db';
+import { db, dbError } from '../server/db';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { authenticateToken, AuthRequest } from '../server/middleware';
@@ -15,7 +14,6 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key-change-in-prod';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
 // --- Global Middleware ---
 app.use(express.json());
@@ -32,16 +30,26 @@ app.use((req, res, next) => {
   next();
 });
 
+// Helper for DB check
+const checkDb = (req: Request, res: Response, next: NextFunction) => {
+  if (!db) {
+    return res.status(503).json({
+      message: 'Database not initialized',
+      error: dbError?.message || 'Unknown DB error'
+    });
+  }
+  next();
+};
+
 // --- API Routes ---
 
-// Health Check
+// Health Check (Always alive, but reports DB status)
 app.get('/api/health', (req, res) => {
   res.json({
     status: db ? 'ok' : 'error',
     dbConnected: !!db,
     dbError: dbError ? {
       message: dbError.message,
-      stack: dbError.stack,
       code: dbError.code
     } : null,
     environment: process.env.VERCEL ? 'vercel' : 'local',
@@ -50,7 +58,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // Register
-app.post('/api/register', async (req, res, next) => {
+app.post('/api/register', checkDb, async (req, res, next) => {
   try {
     const schema = z.object({
       email: z.string().email("Invalid email format"),
@@ -71,8 +79,8 @@ app.post('/api/register', async (req, res, next) => {
 
     res.cookie('token', token, {
       httpOnly: true,
-      secure: true, // Always true for Vercel/HTTPS
-      sameSite: 'none', // Better CSRF compatibility for some mobile browsers
+      secure: true,
+      sameSite: 'none',
       maxAge: 24 * 60 * 60 * 1000
     });
 
@@ -86,7 +94,7 @@ app.post('/api/register', async (req, res, next) => {
 });
 
 // Login
-app.post('/api/login', async (req, res, next) => {
+app.post('/api/login', checkDb, async (req, res, next) => {
   try {
     const schema = z.object({
       email: z.string().email("Invalid email format"),
@@ -130,7 +138,7 @@ app.get('/api/me', authenticateToken, (req: AuthRequest, res) => {
 });
 
 // Get Decisions
-app.get('/api/decisions', authenticateToken, (req: AuthRequest, res, next) => {
+app.get('/api/decisions', authenticateToken, checkDb, (req: AuthRequest, res, next) => {
   try {
     const decisions = db.prepare('SELECT * FROM decisions WHERE user_id = ? ORDER BY created_at DESC').all(req.user!.id);
     res.json(decisions);
@@ -140,7 +148,7 @@ app.get('/api/decisions', authenticateToken, (req: AuthRequest, res, next) => {
 });
 
 // Create Decision
-app.post('/api/decisions', authenticateToken, (req: AuthRequest, res, next) => {
+app.post('/api/decisions', authenticateToken, checkDb, (req: AuthRequest, res, next) => {
   try {
     const schema = z.object({
       title: z.string().min(1, "Title is required").max(100, "Title is too long"),
@@ -162,7 +170,7 @@ app.post('/api/decisions', authenticateToken, (req: AuthRequest, res, next) => {
 });
 
 // Update Decision
-app.put('/api/decisions/:id', authenticateToken, (req: AuthRequest, res, next) => {
+app.put('/api/decisions/:id', authenticateToken, checkDb, (req: AuthRequest, res, next) => {
   try {
     const { id } = req.params;
     const schema = z.object({
@@ -200,7 +208,7 @@ app.put('/api/decisions/:id', authenticateToken, (req: AuthRequest, res, next) =
 });
 
 // Delete Decision
-app.delete('/api/decisions/:id', authenticateToken, (req: AuthRequest, res, next) => {
+app.delete('/api/decisions/:id', authenticateToken, checkDb, (req: AuthRequest, res, next) => {
   try {
     const { id } = req.params;
     const result = db.prepare('DELETE FROM decisions WHERE id = ? AND user_id = ?').run(id, req.user!.id);
@@ -229,9 +237,10 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   });
 });
 
-// --- Development/Local Only ---
-async function setupDevelopment() {
-  if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+// --- Dynamic Dev Setup ---
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+  const setupDev = async () => {
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
@@ -255,13 +264,13 @@ async function setupDevelopment() {
       }
     });
 
-    app.listen(Number(PORT), '0.0.0.0', () => {
-      console.log(`Server running on http://localhost:${PORT}`);
+    const startPort = process.env.PORT || 3000;
+    app.listen(Number(startPort), '0.0.0.0', () => {
+      console.log(`Development server running on http://localhost:${startPort}`);
     });
-  }
+  };
+  setupDev().catch(console.error);
 }
-
-setupDevelopment().catch(console.error);
 
 // Export for Vercel
 export default app;
