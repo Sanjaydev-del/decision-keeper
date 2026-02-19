@@ -13,6 +13,12 @@ const dataDir = isVercel ? '/tmp' : './data';
 if (!fs.existsSync(dataDir)) { fs.mkdirSync(dataDir, { recursive: true }); }
 const dbPath = path.join(dataDir, 'db.json');
 
+// Ensure dbPath exists or initialize safely
+if (!fs.existsSync(dbPath)) {
+  try { fs.writeFileSync(dbPath, JSON.stringify({ users: [], decisions: [] }, null, 2)); }
+  catch (e) { console.error("Initial DB Create Error", e); }
+}
+
 let localData: { users: any[], decisions: any[] } = { users: [], decisions: [] };
 if (fs.existsSync(dbPath)) {
   try { localData = JSON.parse(fs.readFileSync(dbPath, 'utf8')); }
@@ -108,7 +114,7 @@ app.post('/api/login', async (req, res, next) => {
   } catch (error) { next(error); }
 });
 
-app.get('/api/me', authenticateToken, (req, res) => { res.json({ user: req.user }); });
+app.get('/api/me', authenticateToken, (req: any, res: any) => { res.json({ user: req.user }); });
 
 app.get('/api/decisions', authenticateToken, (req: any, res) => {
   res.json(db.prepare('SELECT * FROM decisions WHERE user_id = ?').all(req.user.id));
