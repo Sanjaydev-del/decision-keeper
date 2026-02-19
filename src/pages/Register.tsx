@@ -1,125 +1,163 @@
 import React, { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
-import { motion } from 'motion/react';
-import { LayoutGrid, Mail, Lock, UserPlus, ArrowRight } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { motion } from 'framer-motion';
+import { Sparkles, ArrowRight, User, Lock, Mail, ShieldCheck } from 'lucide-react';
 
-export default function Register() {
+const Register: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (password !== confirmPassword) {
+      setError('Password ciphers do not match.');
+      return;
+    }
+
     setLoading(true);
     try {
       const response = await axios.post('/api/register', { email, password });
       login(response.data.user);
       navigate('/');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Registration failed');
+      setError(err.response?.data?.message || 'Identity creation failed.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden bg-slate-50">
-      {/* Background Blobs */}
-      <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-200/40 rounded-full blur-3xl animate-pulse" />
-      <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-200/40 rounded-full blur-3xl animate-pulse" />
+    <div className="min-h-screen relative flex items-center justify-center px-6 overflow-hidden">
+      <div className="aurora-bg" />
+
+      {/* Decorative Elements */}
+      <div className="absolute top-1/3 right-1/4 w-72 h-72 bg-purple-500/10 blur-[130px] rounded-full -z-10 animate-pulse" />
+      <div className="absolute bottom-1/3 left-1/4 w-80 h-80 bg-cyan-500/10 blur-[150px] rounded-full -z-10 animate-pulse" style={{ animationDelay: '3s' }} />
 
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="w-full max-w-[440px] z-10"
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        className="w-full max-w-md my-12"
       >
-        <div className="flex flex-col items-center mb-8">
+        <div className="text-center mb-10">
           <motion.div
-            whileHover={{ scale: 1.1, rotate: -5 }}
-            className="w-16 h-16 bg-emerald-600 rounded-2xl flex items-center justify-center shadow-2xl shadow-emerald-600/30 mb-4"
+            initial={{ scale: 0, rotate: -20 }}
+            animate={{ scale: 1, rotate: -3 }}
+            transition={{ type: 'spring', damping: 12 }}
+            className="w-20 h-20 bg-purple-600 rounded-3xl mx-auto mb-6 flex items-center justify-center shadow-2xl shadow-purple-500/20"
           >
-            <UserPlus className="text-white w-8 h-8" />
+            <ShieldCheck className="w-10 h-10 text-white" />
           </motion.div>
-          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600">
-            Join Decision Keeper
-          </h1>
-          <p className="text-slate-500 mt-2">Start decider better today</p>
+          <h1 className="text-4xl font-black text-white tracking-tighter mb-2">Join the Nebula</h1>
+          <p className="text-slate-400">Begin your journey of high-stakes choices.</p>
         </div>
 
-        <div className="glass p-8 sm:p-10 rounded-[2.5rem] shadow-2xl shadow-slate-200/50">
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="bg-red-50 text-red-600 p-4 rounded-2xl mb-6 text-sm flex items-center gap-2 border border-red-100"
-            >
-              <div className="w-1.5 h-1.5 bg-red-500 rounded-full shrink-0" />
-              {error}
-            </motion.div>
-          )}
-
+        <div className="glass-card p-10 relative overflow-hidden">
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700 ml-1">Email Address</label>
-              <div className="relative group">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-emerald-600 transition-colors" />
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 ml-1">
+                New Astral Address
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                  <Mail className="w-5 h-5 text-slate-600" />
+                </div>
                 <input
                   type="email"
+                  required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@example.com"
-                  className="input-field pl-12 focus:ring-emerald-500/10 focus:border-emerald-500"
-                  required
+                  className="input-field pl-12"
+                  placeholder="name@nexus.com"
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700 ml-1">Password</label>
-              <div className="relative group">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-emerald-600 transition-colors" />
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 ml-1">
+                Security Cipher
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                  <Lock className="w-5 h-5 text-slate-600" />
+                </div>
                 <input
                   type="password"
+                  required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  className="input-field pl-12"
                   placeholder="At least 6 characters"
-                  className="input-field pl-12 focus:ring-emerald-500/10 focus:border-emerald-500"
-                  required
-                  minLength={6}
                 />
               </div>
             </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 ml-1">
+                Confirm Cipher
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                  <ShieldCheck className="w-5 h-5 text-slate-600" />
+                </div>
+                <input
+                  type="password"
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="input-field pl-12"
+                  placeholder="Re-enter your cipher"
+                />
+              </div>
+            </div>
+
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="bg-rose-500/10 border border-rose-500/20 text-rose-400 p-4 rounded-xl text-sm font-bold text-center"
+              >
+                {error}
+              </motion.div>
+            )}
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-emerald-600 text-white px-6 py-4 rounded-2xl font-bold hover:bg-emerald-700 transition-all active:scale-[0.98] shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 group disabled:opacity-70"
+              className="btn-primary w-full group relative overflow-hidden py-5 !bg-purple-600 hover:!bg-purple-500 shadow-purple-500/20"
             >
-              {loading ? 'Creating Account...' : (
-                <>
-                  Create Account
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </>
-              )}
+              <span className="relative z-10 flex items-center justify-center gap-2 text-lg">
+                {loading ? 'Transmitting...' : (
+                  <>
+                    Initialize Identity
+                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </>
+                )}
+              </span>
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             </button>
           </form>
 
-          <div className="mt-8 pt-8 border-t border-slate-100 text-center">
-            <p className="text-slate-500 text-sm">
-              Already have an account?{' '}
-              <Link to="/login" className="text-emerald-600 hover:text-emerald-700 font-bold decoration-2 underline-offset-4 hover:underline transition-all">
-                Sign In
-              </Link>
-            </p>
-          </div>
+          <p className="text-center mt-10 text-slate-500 text-sm">
+            Already have a path?{' '}
+            <Link to="/login" className="text-purple-400 font-bold hover:text-purple-300 transition-colors inline-flex items-center gap-1 group">
+              Resume voyage
+              <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </p>
         </div>
       </motion.div>
     </div>
   );
-}
+};
+
+export default Register;

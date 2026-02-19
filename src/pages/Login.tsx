@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
-import { motion } from 'motion/react';
-import { LayoutGrid, Mail, Lock, ArrowRight } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { motion } from 'framer-motion';
+import { Sparkles, ArrowRight, User, Lock, Mail } from 'lucide-react';
 
-export default function Login() {
+const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,113 +22,116 @@ export default function Login() {
       login(response.data.user);
       navigate('/');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Login failed');
+      setError(err.response?.data?.message || 'Invalid credentials. Try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden bg-slate-50">
-      {/* Background Blobs */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-200/40 rounded-full blur-3xl animate-pulse" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-200/40 rounded-full blur-3xl animate-pulse" />
+    <div className="min-h-screen relative flex items-center justify-center px-6 overflow-hidden">
+      <div className="aurora-bg" />
+
+      {/* Decorative Elements */}
+      <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-indigo-500/10 blur-[120px] rounded-full -z-10 animate-pulse" />
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 blur-[140px] rounded-full -z-10 animate-pulse" style={{ animationDelay: '2s' }} />
 
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-[440px] z-10"
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        className="w-full max-w-md"
       >
-        <div className="flex flex-col items-center mb-8">
+        <div className="text-center mb-10">
           <motion.div
-            whileHover={{ rotate: 15 }}
-            className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-2xl shadow-indigo-600/30 mb-4"
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', damping: 12 }}
+            className="w-20 h-20 bg-indigo-500 rounded-3xl mx-auto mb-6 flex items-center justify-center shadow-2xl shadow-indigo-500/20 rotate-3"
           >
-            <LayoutGrid className="text-white w-8 h-8" />
+            <Sparkles className="w-10 h-10 text-white" />
           </motion.div>
-          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600">
-            Decision Keeper
-          </h1>
-          <p className="text-slate-500 mt-2">Log in to track your journey</p>
+          <h1 className="text-4xl font-black text-white tracking-tighter mb-2">Welcome Back</h1>
+          <p className="text-slate-400">Continue your decision voyage.</p>
         </div>
 
-        <div className="glass p-8 sm:p-10 rounded-[2.5rem] shadow-2xl shadow-slate-200/50">
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="bg-red-50 text-red-600 p-4 rounded-2xl mb-6 text-sm flex items-center gap-2 border border-red-100"
-            >
-              <div className="w-1.5 h-1.5 bg-red-500 rounded-full shrink-0" />
-              {error}
-            </motion.div>
-          )}
-
+        <div className="glass-card p-10 relative overflow-hidden">
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700 ml-1">Email Address</label>
-              <div className="relative group">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 ml-1">
+                Astral Address
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                  <Mail className="w-5 h-5 text-slate-600" />
+                </div>
                 <input
                   type="email"
+                  required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@example.com"
                   className="input-field pl-12"
-                  required
+                  placeholder="name@nexus.com"
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700 ml-1">Password</label>
-              <div className="relative group">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 ml-1">
+                Security Cipher
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                  <Lock className="w-5 h-5 text-slate-600" />
+                </div>
                 <input
                   type="password"
+                  required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
                   className="input-field pl-12"
-                  required
+                  placeholder="••••••••"
                 />
               </div>
             </div>
+
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="bg-rose-500/10 border border-rose-500/20 text-rose-400 p-4 rounded-xl text-sm font-bold text-center"
+              >
+                {error}
+              </motion.div>
+            )}
 
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary w-full flex items-center justify-center gap-2 group disabled:opacity-70"
+              className="btn-primary w-full group relative overflow-hidden py-5"
             >
-              {loading ? 'Logging in...' : (
-                <>
-                  Sign In
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </>
-              )}
+              <span className="relative z-10 flex items-center justify-center gap-2 text-lg">
+                {loading ? 'Decrypting...' : (
+                  <>
+                    Enter the Hub
+                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </>
+                )}
+              </span>
+              <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             </button>
           </form>
 
-          <div className="mt-8 pt-8 border-t border-slate-100 text-center">
-            <p className="text-slate-500 text-sm">
-              New here?{' '}
-              <Link to="/register" className="text-indigo-600 hover:text-indigo-700 font-bold decoration-2 underline-offset-4 hover:underline transition-all">
-                Create an account
-              </Link>
-            </p>
-          </div>
+          <p className="text-center mt-10 text-slate-500 text-sm">
+            New to the galaxy?{' '}
+            <Link to="/register" className="text-indigo-400 font-bold hover:text-indigo-300 transition-colors inline-flex items-center gap-1 group">
+              Create an identity
+              <Sparkles className="w-3 h-3 group-hover:rotate-12 transition-transform" />
+            </Link>
+          </p>
         </div>
       </motion.div>
-
-      {/* Footer info for uniqueness */}
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
-        className="mt-12 text-slate-400 text-xs text-center max-w-xs leading-relaxed"
-      >
-        Your data is encrypted and stored securely. We help you make better decisions, one step at a time.
-      </motion.p>
     </div>
   );
-}
+};
+
+export default Login;
